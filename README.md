@@ -6,23 +6,32 @@ A modern, cloud-native e-commerce platform built with Spring Boot 3.4.6 microser
 
 The application is composed of the following microservices:
 
-- **Config Server** - Centralized configuration management
-- **Eureka Server** - Service discovery and registration
-- **API Gateway** - Single entry point for all client requests
-- **Auth Service** - Handles authentication and authorization
-- **Product Service** - Product catalog management
-- **Cart Service** - Shopping cart operations
-- **Vendor Service** - Vendor management
-- **Notification Service** - Handles system notifications
+- **Config Server** (Port: 8888) - Centralized configuration management using native file system
+- **Eureka Server** (Port: 8761) - Service discovery and registration
+- **API Gateway** (Port: 8080) - Single entry point with JWT authentication and route management
+- **Auth Service** - Authentication, authorization, and user management
+- **Product Service** - Product catalog and inventory management
+- **Cart Service** - Shopping cart operations and management
+- **Vendor Service** - Vendor onboarding and management
+- **Notification Service** - Asynchronous notification handling
 
 ## 🔐 Security
 
 The platform implements a centralized JWT-based security mechanism:
 
-- JWT token-based authentication
-- Role-based access control
+- JWT token-based authentication with role-based access control
 - Centralized security configuration via `common-dependencies`
-- Protected API endpoints with whitelisted public URLs
+- API Gateway level token validation and claim propagation
+- Protected API endpoints with configurable public URL whitelist
+- Support for token expiration and refresh mechanisms
+
+### API Gateway Security Features
+- JWT validation at gateway level
+- Token claims propagation to microservices via headers:
+  - X-Auth-User-Id
+  - X-Auth-Username
+  - X-Auth-Roles
+- Configurable excluded URLs for public access
 
 ## 🚀 Getting Started
 
@@ -30,7 +39,22 @@ The platform implements a centralized JWT-based security mechanism:
 
 - Java 17 or higher
 - Maven 3.8+
+- PostgreSQL (for data storage)
 - Docker (optional)
+
+### Environment Variables
+
+```bash
+# Required
+JWT_SECRET=your-256-bit-secret-key-here
+CONFIG_SERVER_USERNAME=config
+CONFIG_SERVER_PASSWORD=config
+ENCRYPT_KEY=your-strong-encryption-key-here
+
+# Optional
+CONFIG_LOCATION=../shopping-config  # For config server
+EUREKA_SERVER_URL=http://eureka:password@localhost:8761/eureka/
+```
 
 ### Building the Project
 
@@ -70,17 +94,49 @@ mvn spring-boot:run
 
 Each service exposes its API documentation via OpenAPI/Swagger:
 
-- Swagger UI: `http://<service-host>:<port>/swagger-ui.html`
-- OpenAPI Spec: `http://<service-host>:<port>/v3/api-docs`
+- Gateway Aggregated APIs: `http://localhost:8080/swagger-ui.html`
+- Individual Service APIs: `http://<service-host>:<port>/swagger-ui.html`
+- OpenAPI Specs: `http://<service-host>:<port>/v3/api-docs`
+
+### Available APIs
+
+- **Auth Service**: User management and authentication
+  - POST /auth/login
+  - POST /auth/register
+  - POST /auth/refresh-token
+
+- **Product Service**: Product management
+  - GET /api/products
+  - GET /api/products/{id}
+  - GET /api/products/vendor/{vendorId}
+  - GET /api/products/category/{category}
+
+- **Cart Service**: Shopping cart operations
+  - GET /api/carts/{userId}
+  - POST /api/carts/{userId}/items
+  - PUT /api/carts/{userId}/items/{productId}
+  - DELETE /api/carts/{userId}/items/{productId}
+
+- **Vendor Service**: Vendor management
+  - GET /api/vendors
+  - GET /api/vendors/{id}
+  - GET /api/vendors/status/{status}
+  - GET /api/vendors/search
+
+- **Notification Service**: Notification handling
+  - POST /api/notifications
+  - GET /api/notifications/recipient/{recipient}
+  - GET /api/notifications/status/{status}
+  - POST /api/notifications/retry-failed
 
 ## 🛠️ Common Dependencies
 
 The `common-dependencies` module provides shared functionality:
 
-- Security configurations
-- Exception handling
-- Common DTOs
-- OpenAPI configuration
+- Security configurations with JWT support
+- Exception handling with standardized responses
+- OpenAPI/Swagger configuration with JWT security schemes
+- Common DTOs and utility classes
 
 ### Using Common Dependencies
 
@@ -111,9 +167,19 @@ public class ServiceApplication {
 Each service requires the following configuration in `application.yml`:
 
 ```yaml
+spring:
+  application:
+    name: service-name
+  cloud:
+    config:
+      uri: http://localhost:8888
+      fail-fast: true
+      username: ${CONFIG_SERVER_USERNAME:config}
+      password: ${CONFIG_SERVER_PASSWORD:config}
+
 security:
   jwt:
-    secret: your-256-bit-secret-key
+    secret: ${JWT_SECRET:your-256-bit-secret-key}
     expiration: 86400000 # 24 hours
 
   whitelist:
@@ -126,15 +192,25 @@ security:
       - /auth/**
       - /register
       - /login
+      - /actuator/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://eureka:password@localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
 ```
 
 ## 📦 Technology Stack
 
 - Spring Boot 3.4.6
-- Spring Cloud
+- Spring Cloud (Config, Gateway, Netflix Eureka)
 - Spring Security 6
+- Spring Data JPA
 - JWT Authentication
 - OpenAPI/Swagger
+- PostgreSQL
 - Maven
 - JUnit 5
 - Docker (optional)
