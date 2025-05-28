@@ -1,0 +1,42 @@
+server:
+  port: 8081
+  shutdown: graceful
+
+spring:
+  application:
+    name: auth-service
+  jpa:
+    properties:
+      hibernate:
+        default_schema: auth
+  sql:
+    init:
+      schema-locations: classpath:db/schema-auth.sql
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:your-256-bit-secret-key-here-must-be-at-least-32-characters}
+    expiration: 86400000 # 24 hours
+    refresh-token:
+      expiration: 604800000 # 7 days
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+logging:
+  level:
+    com.shopping.auth: DEBUG
+    org.springframework.security: DEBUG 

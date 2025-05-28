@@ -1,0 +1,44 @@
+server:
+  port: 8084
+  shutdown: graceful
+
+spring:
+  application:
+    name: vendor-service
+  jpa:
+    properties:
+      hibernate:
+        default_schema: vendor
+  sql:
+    init:
+      schema-locations: classpath:db/schema-vendor.sql
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka:password@localhost:8761/eureka
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 30
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+logging:
+  level:
+    com.shopping.vendor: DEBUG 

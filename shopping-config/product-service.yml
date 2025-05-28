@@ -1,0 +1,34 @@
+server:
+  port: 8083
+  shutdown: graceful
+
+spring:
+  application:
+    name: product-service
+  jpa:
+    properties:
+      hibernate:
+        default_schema: product
+  sql:
+    init:
+      schema-locations: classpath:db/schema-product.sql
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+logging:
+  level:
+    com.shopping.product: DEBUG 

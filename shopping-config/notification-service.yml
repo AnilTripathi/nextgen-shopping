@@ -1,0 +1,60 @@
+server:
+  port: 8082
+  shutdown: graceful
+
+spring:
+  application:
+    name: notification-service
+  jpa:
+    properties:
+      hibernate:
+        default_schema: notification
+  sql:
+    init:
+      schema-locations: classpath:db/schema-notification.sql
+  mail:
+    host: ${SMTP_HOST:smtp.gmail.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:your-email@gmail.com}
+    password: ${SMTP_PASSWORD:your-app-specific-password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    # Disable mail server validation during startup
+    test-connection: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    mail:
+      enabled: true
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+logging:
+  level:
+    com.shopping.notification: DEBUG
+    org.springframework.mail: DEBUG
+
+notification:
+  templates:
+    welcome: "Welcome to our platform, %s!"
+    order-confirmation: "Your order #%s has been confirmed."
+    password-reset: "Your password reset code is: %s"
+  email:
+    from: ${SMTP_FROM:noreply@shopping.com}
+    retry-attempts: 3
+    retry-delay: 1000 

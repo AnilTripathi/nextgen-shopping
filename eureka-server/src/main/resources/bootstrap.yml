@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: eureka-server-service
+  cloud:
+    config:
+      enabled: false
+      fail-fast: false
+      discovery:
+        enabled: false
+
+encrypt:
+  key: ${ENCRYPT_KEY:your-strong-encryption-key-here} 
